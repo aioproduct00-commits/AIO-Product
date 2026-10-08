@@ -28,7 +28,7 @@ export const Hero: React.FC = () => {
             {/* Sage Pill Badge */}
             <div className="inline-block">
               <span className="px-4 py-1.5 rounded-full bg-[#4A6B53] text-white text-xs font-bold uppercase tracking-wider shadow-sm border border-[#5C7F66]">
-                AIO PRODUCT
+                AIO PRODUCTS
               </span>
             </div>
 
