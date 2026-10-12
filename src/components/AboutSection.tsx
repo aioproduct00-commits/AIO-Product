@@ -3,7 +3,7 @@ import { ShieldCheck, CheckCircle2, Truck, Award, Edit3 } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 
 export const AboutSection: React.FC = () => {
-  const { siteSettings, isAdminLoggedIn, openLiveEdit } = useStore();
+  const { siteSettings, isAdminLoggedIn, openLiveEdit, setCurrentView, setSelectedCategory } = useStore();
   const about = siteSettings.about || {
     heading: 'Because Brand Matters.',
     tagline: 'Because Brand Matters.',
@@ -88,6 +88,32 @@ export const AboutSection: React.FC = () => {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Quick Action Navigation */}
+            <div className="pt-4 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedCategory(null);
+                  setCurrentView('shop');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="px-6 py-3 rounded-xl bg-[#4A6B53] hover:bg-[#3D5B45] text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+              >
+                Shop Our Collection
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentView('contact');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="px-6 py-3 rounded-xl bg-white hover:bg-[#F2F7F4] text-[#243D2C] border border-[#88C49A] font-bold text-xs shadow-xs transition-all cursor-pointer"
+              >
+                Contact Customer Care
+              </button>
             </div>
           </div>
         </div>

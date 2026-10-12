@@ -1,5 +1,6 @@
 import React from 'react';
-import { X, ShieldCheck, Truck, RotateCcw, FileText } from 'lucide-react';
+import { X, ShieldCheck, Truck, RotateCcw, FileText, MessageCircle, Mail } from 'lucide-react';
+import { useStore } from '../context/StoreContext';
 
 interface PolicyModalProps {
   type: 'privacy' | 'terms' | 'return' | 'shipping' | null;
@@ -7,7 +8,15 @@ interface PolicyModalProps {
 }
 
 export const PolicyModal: React.FC<PolicyModalProps> = ({ type, onClose }) => {
+  const { siteSettings } = useStore();
+
   if (!type) return null;
+
+  const contactPhone = siteSettings.contact?.phone || '+92 347 5429514';
+  const contactWhatsApp = siteSettings.contact?.whatsapp || '+92 347 5429514';
+  const contactEmail = siteSettings.contact?.email || 'info@aioproduct.pk';
+  const contactAddress = siteSettings.contact?.address || 'Lahore, Pakistan';
+  const waClean = contactWhatsApp.replace(/[^0-9]/g, '');
 
   const content = {
     return: {
@@ -30,7 +39,17 @@ export const PolicyModal: React.FC<PolicyModalProps> = ({ type, onClose }) => {
           </ul>
           <h4 className="font-bold text-slate-900 text-sm">How to Initiate a Claim</h4>
           <p>
-            Simply reach out to our official WhatsApp support at <strong>+92 300 1234567</strong> with your Order Number and a short video highlighting the issue. Our support team will arrange a hassle-free replacement.
+            Simply reach out to our official WhatsApp support at{' '}
+            <a
+              href={`https://wa.me/${waClean}`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-[#4A6B53] font-bold hover:underline inline-flex items-center gap-1"
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              <span>{contactWhatsApp}</span>
+            </a>{' '}
+            with your Order Number and a short video highlighting the issue. Our support team will arrange a hassle-free replacement.
           </p>
         </div>
       ),
@@ -76,6 +95,12 @@ export const PolicyModal: React.FC<PolicyModalProps> = ({ type, onClose }) => {
           <p>
             We never sell, rent, or trade your personal information with any third-party marketing companies. Your contact details are only shared with our logistics partners to fulfill delivery.
           </p>
+          <p className="text-xs text-slate-500">
+            For questions regarding privacy, email us at{' '}
+            <a href={`mailto:${contactEmail}`} className="text-[#4A6B53] font-bold hover:underline">
+              {contactEmail}
+            </a>.
+          </p>
         </div>
       ),
     },
@@ -95,6 +120,10 @@ export const PolicyModal: React.FC<PolicyModalProps> = ({ type, onClose }) => {
           <p>
             All prices are shown in Pakistani Rupees (PKR ₨) and include applicable product costs. What you see is what you pay at delivery.
           </p>
+          <h4 className="font-bold text-slate-900 text-sm">Operating Jurisdiction</h4>
+          <p>
+            Orders and deliveries are fulfilled within the Islamic Republic of Pakistan from {contactAddress}.
+          </p>
         </div>
       ),
     },
@@ -105,7 +134,7 @@ export const PolicyModal: React.FC<PolicyModalProps> = ({ type, onClose }) => {
       <div className="relative w-full max-w-xl bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 max-h-[85vh] flex flex-col">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
@@ -118,7 +147,7 @@ export const PolicyModal: React.FC<PolicyModalProps> = ({ type, onClose }) => {
             <h3 className="text-lg font-extrabold text-slate-950 font-['Outfit']">
               {content.title}
             </h3>
-            <span className="text-[11px] text-amber-600 font-bold uppercase tracking-wider">
+            <span className="text-[11px] text-[#4A6B53] font-bold uppercase tracking-wider">
               AIO PRODUCT Pakistan
             </span>
           </div>
@@ -126,10 +155,20 @@ export const PolicyModal: React.FC<PolicyModalProps> = ({ type, onClose }) => {
 
         <div className="overflow-y-auto py-6 pr-1">{content.body}</div>
 
-        <div className="pt-4 border-t border-slate-100 flex justify-end">
+        <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+          <a
+            href={`https://wa.me/${waClean}`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs font-bold text-[#4A6B53] hover:underline flex items-center gap-1.5"
+          >
+            <MessageCircle className="w-4 h-4" />
+            <span>Chat on WhatsApp</span>
+          </a>
+
           <button
             onClick={onClose}
-            className="px-6 py-2.5 rounded-xl bg-slate-950 text-white font-bold text-xs"
+            className="px-6 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs cursor-pointer"
           >
             Close
           </button>

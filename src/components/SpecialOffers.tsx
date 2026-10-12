@@ -70,11 +70,15 @@ export const SpecialOffers: React.FC = () => {
           </div>
 
           {/* Center Column: Product Showcase Photo */}
-          <div className="relative z-10 max-w-md w-full flex items-center justify-center">
+          <div
+            onClick={handleAction}
+            className="relative z-10 max-w-md w-full flex items-center justify-center cursor-pointer group"
+            title="Click to view Special Offer Products"
+          >
             <img
               src="https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=800&auto=format&fit=crop&q=80"
               alt="Special Offer Gear"
-              className="w-full h-44 sm:h-52 object-contain filter drop-shadow-2xl"
+              className="w-full h-44 sm:h-52 object-contain filter drop-shadow-2xl group-hover:scale-108 transition-transform duration-500"
             />
           </div>
 

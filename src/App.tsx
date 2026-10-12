@@ -63,7 +63,10 @@ const MainLayout: React.FC = () => {
         {currentView === 'home' && (
           <>
             {/* 1. Hero Section with Quality Trust Value Calligraphy and Trust Bar */}
-            <Hero />
+            <Hero
+              onOpenTrackOrder={() => setTrackOrderOpen(true)}
+              onOpenPolicy={type => setPolicyType(type)}
+            />
 
             {/* 2. Explore Our Categories (White background, 6 cards) */}
             <CategoriesSection />

@@ -39,6 +39,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTrackOrder }) => {
     goBack,
     canGoBack,
     selectedProduct,
+    showToast,
   } = useStore();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -133,10 +134,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTrackOrder }) => {
               <span>Admin</span>
             </button>
 
-            <div className="hidden sm:flex items-center gap-1 text-white/90 font-semibold text-[11px] shrink-0">
+            <button
+              type="button"
+              onClick={() => showToast('Store currency is set to Pakistani Rupee (PKR ₨) for Cash on Delivery nationwide.', 'info')}
+              className="hidden sm:flex items-center gap-1 text-white/90 hover:text-white font-semibold text-[11px] shrink-0 cursor-pointer transition-colors"
+              title="All prices in Pakistani Rupees (PKR)"
+            >
               <span className="text-sm">🇵🇰</span>
               <span>PKR</span>
-            </div>
+            </button>
           </div>
         </div>
       </div>
@@ -300,9 +306,21 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenTrackOrder }) => {
                   placeholder="Search for products..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      handleNavClick('shop');
+                    }
+                  }}
                   className="w-48 md:w-56 lg:w-64 pl-4 pr-9 py-2 rounded-full bg-[#F5F8F6] border border-[#D5E3DA] text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-[#4A6B53] focus:ring-1 focus:ring-[#4A6B53] transition-all"
                 />
-                <Search className="absolute right-3.5 w-4 h-4 text-slate-400 pointer-events-none" />
+                <button
+                  type="button"
+                  onClick={() => handleNavClick('shop')}
+                  className="absolute right-2.5 p-1 text-slate-400 hover:text-[#4A6B53] transition-colors cursor-pointer"
+                  title="Search products"
+                >
+                  <Search className="w-4 h-4" />
+                </button>
               </div>
 
               {/* Live search dropdown */}

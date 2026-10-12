@@ -29,24 +29,29 @@ export const ContactView: React.FC = () => {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [isSent, setIsSent] = useState(false);
+  const [ticketId, setTicketId] = useState('');
+
+  const whatsappClean = (contact.whatsapp || '923475429514').replace(/[^0-9]/g, '');
+
+  const handleSendViaWhatsApp = () => {
+    if (!message.trim() && !name.trim()) {
+      window.open(`https://wa.me/${whatsappClean}`, '_blank');
+      return;
+    }
+    const text = `*New Customer Inquiry from AIO PRODUCT Website*\n*Name:* ${name || 'Customer'}\n*Phone:* ${phone || 'N/A'}\n*Subject:* ${subject || 'General Inquiry'}\n*Message:* ${message || 'Hello, I have an inquiry.'}`;
+    window.open(`https://wa.me/${whatsappClean}?text=${encodeURIComponent(text)}`, '_blank');
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const generatedTicket = 'AIO-INQ-' + Math.floor(100000 + Math.random() * 900000);
+    setTicketId(generatedTicket);
     setIsSent(true);
-    showToast('Your message has been sent to our customer care team!', 'success');
-    setTimeout(() => {
-      setName('');
-      setPhone('');
-      setSubject('');
-      setMessage('');
-      setIsSent(false);
-    }, 3000);
+    showToast(`Inquiry #${generatedTicket} logged! We will reach out shortly.`, 'success');
   };
 
-  const whatsappClean = contact.whatsapp?.replace(/[^0-9]/g, '');
-
   return (
-    <div className="bg-slate-50 py-8 sm:py-16 min-h-screen">
+    <div className="bg-slate-50 py-8 sm:py-16 min-h-screen font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-6 flex items-center justify-between">
           <button
@@ -133,7 +138,7 @@ export const ContactView: React.FC = () => {
                   <h4 className="text-xs font-bold text-slate-900 uppercase">Email Support</h4>
                   <a
                     href={`mailto:${contact.email}`}
-                    className="text-sm font-bold text-slate-800 hover:text-amber-600 block mt-0.5"
+                    className="text-sm font-bold text-slate-800 hover:text-[#4A6B53] block mt-0.5"
                   >
                     {contact.email}
                   </a>
@@ -166,14 +171,37 @@ export const ContactView: React.FC = () => {
               </p>
 
               {isSent ? (
-                <div className="py-12 text-center space-y-3">
+                <div className="py-12 text-center space-y-4">
                   <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
                     <CheckCircle2 className="w-8 h-8" />
                   </div>
                   <h4 className="text-lg font-bold text-slate-900">Message Received!</h4>
                   <p className="text-xs text-slate-600 max-w-sm mx-auto">
-                    Thank you for reaching out. We will contact you back on your provided phone number or email.
+                    Your inquiry reference is <strong className="font-mono text-slate-900">{ticketId}</strong>. We will contact you on your provided phone number or email.
                   </p>
+                  <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleSendViaWhatsApp}
+                      className="px-5 py-2.5 rounded-xl bg-[#4A6B53] hover:bg-[#3D5B45] text-white font-bold text-xs shadow-md flex items-center gap-2 cursor-pointer"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      <span>Forward to WhatsApp ({contact.whatsapp})</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setName('');
+                        setPhone('');
+                        setSubject('');
+                        setMessage('');
+                        setIsSent(false);
+                      }}
+                      className="px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                    >
+                      Send Another Message
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -234,13 +262,24 @@ export const ContactView: React.FC = () => {
                     />
                   </div>
 
-                  <button
-                    type="submit"
-                    className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#4A6B53] hover:bg-[#3D5B45] text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <Send className="w-4 h-4" />
-                    <span>Send Message</span>
-                  </button>
+                  <div className="flex flex-wrap items-center gap-3 pt-2">
+                    <button
+                      type="submit"
+                      className="px-8 py-3.5 rounded-xl bg-[#4A6B53] hover:bg-[#3D5B45] text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Send className="w-4 h-4" />
+                      <span>Send Message</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleSendViaWhatsApp}
+                      className="px-6 py-3.5 rounded-xl bg-white hover:bg-[#EDF4F0] text-[#243F2E] font-bold text-xs border border-[#88C49A] shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <MessageCircle className="w-4 h-4 text-[#4A6B53]" />
+                      <span>Send via WhatsApp</span>
+                    </button>
+                  </div>
                 </form>
               )}
             </div>
