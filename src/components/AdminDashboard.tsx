@@ -65,6 +65,7 @@ import {
   isSupabaseConnected,
   resetLocalStoreToDefaults,
   saveCustomSupabaseCredentials,
+  testSupabaseConnection,
 } from '../lib/supabase';
 
 type AdminTab =
@@ -533,15 +534,20 @@ export const AdminDashboard: React.FC = () => {
   };
 
   // --- SUPABASE CONFIG SAVE ---
-  const handleSaveSupabaseConfig = (e: React.FormEvent) => {
+  const handleSaveSupabaseConfig = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsTestingDb(true);
     saveCustomSupabaseCredentials(dbUrl, dbKey);
-    setTimeout(async () => {
-      await refreshAllData();
-      setIsTestingDb(false);
-      showToast('Supabase connection updated and data refreshed', 'success');
-    }, 1000);
+
+    const testResult = await testSupabaseConnection(dbUrl, dbKey);
+    await refreshAllData();
+    setIsTestingDb(false);
+
+    if (testResult.success) {
+      showToast(testResult.message, 'success');
+    } else {
+      showToast(testResult.message, 'error');
+    }
   };
 
   const handleResetCatalog = () => {
@@ -2247,9 +2253,10 @@ export const AdminDashboard: React.FC = () => {
               <button
                 onClick={handleSaveCMS}
                 className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md cursor-pointer"
+                title="Publish changes to Supabase so all visitors worldwide receive the latest update"
               >
-                <Save className="w-4 h-4" />
-                <span>Save All Changes</span>
+                <Sparkles className="w-4 h-4 text-slate-950" />
+                <span>Publish Changes Live</span>
               </button>
             </div>
 
@@ -2712,8 +2719,8 @@ export const AdminDashboard: React.FC = () => {
                   type="submit"
                   className="px-8 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md cursor-pointer flex items-center gap-2"
                 >
-                  <Save className="w-4 h-4" />
-                  <span>Save All Website Content</span>
+                  <Sparkles className="w-4 h-4 text-slate-950" />
+                  <span>Publish All Website Changes</span>
                 </button>
               </div>
             </form>
@@ -2823,14 +2830,15 @@ export const AdminDashboard: React.FC = () => {
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                     <FileCode className="w-4 h-4 text-amber-500" />
-                    <span>Supabase Database Schema (PostgreSQL with RLS)</span>
+                    <span>Supabase Database Schema & Storage (PostgreSQL with RLS)</span>
                   </h4>
                   <span className="text-[11px] text-slate-500">File: /supabase-schema.sql</span>
                 </div>
-                <div className="p-4 rounded-xl bg-slate-950 text-slate-300 font-mono text-[11px] max-h-48 overflow-y-auto leading-relaxed border border-slate-800">
-                  <p>-- Tables created: categories, products, customers, orders, order_items, reviews, newsletter_subscribers, site_settings</p>
-                  <p>-- Full DDL with Row Level Security (RLS) is saved in /supabase-schema.sql</p>
-                  <p>-- Copy and paste directly into your Supabase SQL Editor.</p>
+                <div className="p-4 rounded-xl bg-slate-950 text-slate-300 font-mono text-[11px] max-h-56 overflow-y-auto leading-relaxed border border-slate-800 space-y-1">
+                  <p className="text-emerald-400">✓ Tables: products, categories, orders, order_items, customers, reviews, newsletter_subscribers, site_settings</p>
+                  <p className="text-amber-300">✓ Storage Bucket: aio-media (for online product photos and promotional banners)</p>
+                  <p className="text-blue-300">✓ Security: Row Level Security (RLS) active on all tables. Customer orders are strictly protected.</p>
+                  <p className="text-slate-400">-- Run the complete SQL script in your Supabase project SQL Editor to enable all tables and storage.</p>
                 </div>
               </div>
             </div>

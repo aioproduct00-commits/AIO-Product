@@ -224,3 +224,33 @@ VALUES
     ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Muhammad Usman (Islamabad)', 5, 'The 22.5W fast charge is real. Charged my phone twice with battery to spare. Cash on Delivery was seamless.', true),
     ('dddddddd-dddd-dddd-dddd-dddddddddddd', 'Dr. Sarah Khan (Rawalpindi)', 5, 'Holds ice water all day at the clinic even in 40 degree heat. The matte finish feels very premium.', true)
 ON CONFLICT DO NOTHING;
+
+-- =========================================================================
+-- SUPABASE STORAGE BUCKET: aio-media (Product images & banners)
+-- =========================================================================
+-- Create the public storage bucket for product photos and promotional banners
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+    'aio-media',
+    'aio-media',
+    true,
+    10485760, -- 10MB limit
+    ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+)
+ON CONFLICT (id) DO UPDATE SET
+    public = true,
+    file_size_limit = 10485760,
+    allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
+-- Storage Policies: Public can read, authenticated or anon with app key can upload product media
+CREATE POLICY "Public media access" ON storage.objects
+    FOR SELECT USING (bucket_id = 'aio-media');
+
+CREATE POLICY "Admin & store image upload" ON storage.objects
+    FOR INSERT WITH CHECK (bucket_id = 'aio-media');
+
+CREATE POLICY "Admin & store image update" ON storage.objects
+    FOR UPDATE USING (bucket_id = 'aio-media');
+
+CREATE POLICY "Admin & store image delete" ON storage.objects
+    FOR DELETE USING (bucket_id = 'aio-media');

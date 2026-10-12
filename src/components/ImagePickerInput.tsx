@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
-import { Upload, Link as LinkIcon, Image as ImageIcon, Check, RefreshCw, X, Zap } from 'lucide-react';
+import { Upload, Link as LinkIcon, Image as ImageIcon, Check, RefreshCw, X, Zap, CloudUpload } from 'lucide-react';
 import { readFileAsOptimizedDataURL, resolveImageUrl, FALLBACK_PRODUCT_IMAGE } from '../lib/utils';
+import { uploadImageToSupabaseStorage, isSupabaseConnected } from '../lib/supabase';
 
 interface ImagePickerInputProps {
   value: string;
@@ -26,10 +27,12 @@ export const ImagePickerInput: React.FC<ImagePickerInputProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<'upload' | 'link'>('upload');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState('');
   const [linkInput, setLinkInput] = useState(value && !value.startsWith('data:') ? value : '');
 
   const isDataUrl = value && value.startsWith('data:');
+  const isSupabaseHosted = value && (value.includes('.supabase.co/storage') || value.includes('/aio-media/'));
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -44,13 +47,31 @@ export const ImagePickerInput: React.FC<ImagePickerInputProps> = ({
 
     setIsProcessing(true);
     setErrorMessage('');
+    setUploadStatus('Optimizing image...');
     try {
-      const optimized = await readFileAsOptimizedDataURL(file, 1000, 0.85);
-      onChange(optimized);
+      const optimizedDataUrl = await readFileAsOptimizedDataURL(file, 1200, 0.85);
+
+      // Attempt Supabase Storage upload if connected
+      if (isSupabaseConnected()) {
+        setUploadStatus('Uploading to Supabase Storage...');
+        const res = await uploadImageToSupabaseStorage(optimizedDataUrl, 'products');
+        if (res.success && res.url && !res.url.startsWith('data:')) {
+          onChange(res.url);
+          setUploadStatus('Saved to Supabase Storage (CDN)');
+        } else {
+          // Fallback to optimized data url
+          onChange(optimizedDataUrl);
+          setUploadStatus('Saved locally');
+        }
+      } else {
+        onChange(optimizedDataUrl);
+        setUploadStatus('Saved to local storage');
+      }
     } catch (err: any) {
       setErrorMessage(err?.message || 'Failed to read image from device.');
     } finally {
       setIsProcessing(false);
+      setTimeout(() => setUploadStatus(''), 3000);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -146,7 +167,15 @@ export const ImagePickerInput: React.FC<ImagePickerInputProps> = ({
             </div>
 
             <div className="mt-1.5 text-[11px] text-slate-500 truncate">
-              {isDataUrl ? (
+              {uploadStatus ? (
+                <span className="inline-flex items-center gap-1 text-amber-700 font-bold">
+                  <RefreshCw className="w-3 h-3 animate-spin text-amber-600" /> {uploadStatus}
+                </span>
+              ) : isSupabaseHosted ? (
+                <span className="inline-flex items-center gap-1 text-emerald-700 font-bold">
+                  <CloudUpload className="w-3.5 h-3.5 text-emerald-600" /> Supabase Storage CDN Hosted
+                </span>
+              ) : isDataUrl ? (
                 <span className="inline-flex items-center gap-1 text-emerald-700 font-bold">
                   <Check className="w-3 h-3 text-emerald-600" /> Device image attached (JPEG/PNG)
                 </span>

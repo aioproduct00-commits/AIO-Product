@@ -91,6 +91,46 @@ export function isSupabaseConnected(): boolean {
   return Boolean(url && anonKey && url.startsWith('https://'));
 }
 
+export async function testSupabaseConnection(url?: string, anonKey?: string): Promise<{ success: boolean; message: string }> {
+  const targetUrl = (url || getSupabaseCredentials().url).trim();
+  const targetKey = (anonKey || getSupabaseCredentials().anonKey).trim();
+
+  if (!targetUrl || !targetKey || !targetUrl.startsWith('https://')) {
+    return {
+      success: false,
+      message: 'Please provide a valid Supabase project URL (https://...) and Anon public API key.',
+    };
+  }
+
+  try {
+    const testClient = createClient(targetUrl, targetKey);
+    const { data, error } = await testClient.from('products').select('id').limit(1);
+
+    if (error) {
+      if (error.code === '42P01') {
+        return {
+          success: false,
+          message: `Connected to Supabase, but the "products" table was not found. Please run the SQL schema script in your Supabase SQL Editor.`,
+        };
+      }
+      return {
+        success: false,
+        message: `Supabase returned error: ${error.message}`,
+      };
+    }
+
+    return {
+      success: true,
+      message: `Successfully connected to your Supabase project! Live database is ready.`,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      message: `Connection failed: ${err?.message || 'Network error'}`,
+    };
+  }
+}
+
 // -------------------------------------------------------------
 // LOCAL STORAGE FALLBACK STORE INITIALIZERS
 // -------------------------------------------------------------
@@ -937,4 +977,101 @@ export async function saveSiteSettings(settings: SiteSettings): Promise<boolean>
 
   setLocalItem(STORAGE_KEYS.SETTINGS, settings);
   return true;
+}
+
+// --- SUPABASE STORAGE (PRODUCT IMAGES & BANNERS) ---
+export const STORAGE_BUCKET_NAME = 'aio-media';
+
+/**
+ * Uploads an image file or base64 data string to Supabase Storage bucket 'aio-media'.
+ * Returns the public CDN URL of the uploaded image if successful.
+ * If Supabase is not connected or bucket is not accessible, falls back gracefully.
+ */
+export async function uploadImageToSupabaseStorage(
+  fileOrBase64: File | string,
+  folder: 'products' | 'banners' | 'categories' = 'products'
+): Promise<{ url: string; success: boolean; error?: string }> {
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    if (typeof fileOrBase64 === 'string') {
+      return { url: fileOrBase64, success: true };
+    }
+    return { url: '', success: false, error: 'Supabase client not connected.' };
+  }
+
+  try {
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 9);
+
+    let blob: Blob;
+    let contentType = 'image/jpeg';
+    let fileExt = 'jpg';
+
+    if (typeof fileOrBase64 === 'string') {
+      if (fileOrBase64.startsWith('data:')) {
+        const matches = fileOrBase64.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
+        if (!matches || matches.length !== 3) {
+          return { url: fileOrBase64, success: true };
+        }
+        contentType = matches[1];
+        if (contentType.includes('png')) fileExt = 'png';
+        else if (contentType.includes('webp')) fileExt = 'webp';
+
+        const byteCharacters = atob(matches[2]);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        blob = new Blob([byteArray], { type: contentType });
+      } else {
+        // Already a remote URL (Unsplash, imgpile, etc.)
+        return { url: fileOrBase64, success: true };
+      }
+    } else {
+      blob = fileOrBase64;
+      contentType = fileOrBase64.type || 'image/jpeg';
+      if (contentType.includes('png')) fileExt = 'png';
+      else if (contentType.includes('webp')) fileExt = 'webp';
+    }
+
+    const filePath = `${folder}/${timestamp}-${randomStr}.${fileExt}`;
+
+    const { data, error } = await supabase.storage
+      .from(STORAGE_BUCKET_NAME)
+      .upload(filePath, blob, {
+        contentType,
+        cacheControl: '3600',
+        upsert: true,
+      });
+
+    if (error) {
+      console.warn('Supabase storage upload error:', error.message);
+      return {
+        url: typeof fileOrBase64 === 'string' ? fileOrBase64 : '',
+        success: false,
+        error: error.message,
+      };
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from(STORAGE_BUCKET_NAME)
+      .getPublicUrl(data.path);
+
+    if (publicUrlData?.publicUrl) {
+      return { url: publicUrlData.publicUrl, success: true };
+    }
+
+    return {
+      url: typeof fileOrBase64 === 'string' ? fileOrBase64 : '',
+      success: true,
+    };
+  } catch (err: any) {
+    console.warn('Storage upload error:', err);
+    return {
+      url: typeof fileOrBase64 === 'string' ? fileOrBase64 : '',
+      success: false,
+      error: err?.message || 'Storage upload failed',
+    };
+  }
 }
