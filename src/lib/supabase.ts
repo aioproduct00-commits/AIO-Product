@@ -517,38 +517,7 @@ export async function createOrder(
   const finalOrder: Order = { ...newOrder, id: finalOrderId };
 
   // Guaranteed save to local storage so the placed order is immediately and permanently visible in admin portal
-  const orders = getLocalItem<Order[]>(STORAGE_KEYS.ORDERS, INITIAL_ORDERS);
-  const existingIdx = orders.findIndex(o => o.id === finalOrder.id || o.order_number === finalOrder.order_number);
-  if (existingIdx >= 0) {
-    orders[existingIdx] = finalOrder;
-  } else {
-    orders.unshift(finalOrder);
-  }
-  setLocalItem(STORAGE_KEYS.ORDERS, orders);
-
-  // Save customer
-  const customers = getLocalItem<Customer[]>(STORAGE_KEYS.CUSTOMERS, []);
-  const existingCustIndex = customers.findIndex(c => c.phone === customerData.phone);
-  if (existingCustIndex >= 0) {
-    customers[existingCustIndex] = { ...customerData, id: customers[existingCustIndex].id, created_at: customers[existingCustIndex].created_at };
-  } else {
-    customers.unshift({
-      id: customerId,
-      ...customerData,
-      created_at: now,
-    });
-  }
-  setLocalItem(STORAGE_KEYS.CUSTOMERS, customers);
-
-  // Deduct local stock for products
-  const products = getLocalItem<Product[]>(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
-  items.forEach(item => {
-    const p = products.find(prod => prod.id === item.product_id);
-    if (p) {
-      p.stock_quantity = Math.max(0, p.stock_quantity - item.quantity);
-    }
-  });
-  setLocalItem(STORAGE_KEYS.PRODUCTS, products);
+  
 
   return finalOrder;
 }
