@@ -79,27 +79,21 @@ export async function testSupabaseConnection(
   url?: string,
   anonKey?: string
 ): Promise<{ success: boolean; message: string }> {
-  const credentials = getSupabaseCredentials();
+  const targetUrl = (url || getSupabaseCredentials().url).trim();
+  const targetKey = (anonKey || getSupabaseCredentials().anonKey).trim();
 
-  const targetUrl = (url || credentials.url).trim();
-  const targetKey = (anonKey || credentials.anonKey).trim();
-
-  if (
-    !targetUrl ||
-    !targetKey ||
-    !targetUrl.startsWith('https://')
-  ) {
+  if (!targetUrl || !targetKey || !targetUrl.startsWith('https://')) {
     return {
       success: false,
       message:
-        'Please provide a valid Supabase project URL and anon public API key.',
+        'Please provide a valid Supabase project URL and Anon public API key.',
     };
   }
 
   try {
     const testClient = createClient(targetUrl, targetKey);
 
-    const { error } = await testClient
+    const { data, error } = await testClient
       .from('products')
       .select('id')
       .limit(1);
@@ -109,7 +103,7 @@ export async function testSupabaseConnection(
         return {
           success: false,
           message:
-            'Connected to Supabase, but the products table was not found. Please run your SQL schema.',
+            'Connected to Supabase, but the "products" table was not found.',
         };
       }
 
@@ -145,6 +139,14 @@ export function getCurrentCustomer(): Customer | null {
   if (typeof window === 'undefined') {
     return null;
   }
+
+  try {
+    const stored = localStorage.getItem(CURRENT_CUSTOMER_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+}
 
   try {
     const value = localStorage.getItem(CURRENT_CUSTOMER_KEY);
