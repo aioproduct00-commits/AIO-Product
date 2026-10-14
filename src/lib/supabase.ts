@@ -524,30 +524,31 @@ export async function createOrder(
 
 export async function updateOrderStatus(orderId: string, status: OrderStatus): Promise<boolean> {
   const supabase = getSupabaseClient();
-  const now = new Date().toISOString();
 
-  if (supabase) {
-    try {
-      const { error } = await supabase
-        .from('orders')
-        .update({ order_status: status, updated_at: now })
-        .eq('id', orderId);
+  if (!supabase) {
+    console.error('Supabase is not connected.');
+    return false;
+  }
 
-      if (!error) return true;
-    } catch (e) {
-      console.warn('Supabase order status update error:', e);
+  try {
+    const { error } = await supabase
+      .from('orders')
+      .update({
+        order_status: status,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', orderId);
+
+    if (error) {
+      console.error('Supabase order status update error:', error.message);
+      return false;
     }
-  }
 
-  const orders = getLocalItem<Order[]>(STORAGE_KEYS.ORDERS, []);
-  const order = orders.find(o => o.id === orderId);
-  if (order) {
-    order.order_status = status;
-    order.updated_at = now;
-    setLocalItem(STORAGE_KEYS.ORDERS, orders);
     return true;
+  } catch (e) {
+    console.error('Supabase order status update error:', e);
+    return false;
   }
-  return false;
 }
 
 export async function deleteOrderById(orderId: string): Promise<boolean> {
