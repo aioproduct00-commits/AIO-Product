@@ -98,6 +98,16 @@ export async function testSupabaseConnection(
       .select('id')
       .limit(1);
 
+export const testSupabaseConnection = async (): Promise<{
+  success: boolean;
+  message: string;
+}> => {
+  try {
+    const { error } = await supabase
+      .from('products')
+      .select('id')
+      .limit(1);
+
     if (error) {
       if (error.code === '42P01') {
         return {
@@ -120,9 +130,10 @@ export async function testSupabaseConnection(
   } catch (error: any) {
     return {
       success: false,
-      message:
-        error?.message || 'Could not connect to Supabase.',
+      message: error?.message || 'Could not connect to Supabase.',
     };
+  }
+};
   }
 }
 
